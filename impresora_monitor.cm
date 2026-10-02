@@ -1,0 +1,65 @@
+monitor GestorImpresoras {
+    int libres[2];
+    int impresoras_libres = 2;
+    condition hay_libres;
+
+    void inicializar(){
+        libres[0] = 1;
+        libres[1] = 1;
+    }
+
+    int requerir(){
+        int i;
+        int id_impresora;
+        if(impresoras_libres == 0){
+            waitc(hay_libres);
+        }
+        impresoras_libres--;
+
+        for(i = 0; i<2; i++){
+            if(libres[i] == 1){
+                libres[i] = 0;
+                id_impresora = i;
+                break;
+            }
+        }
+        return id_impresora;
+    }
+    
+    void liberar(int id_impresora){
+        impresoras_libres++;
+        libres[id_impresora] = 1;
+        signalc(hay_libres);
+    }
+}
+
+// Semáforo global SOLO para proteger los mensajes en la consola
+semaphore mutex_pantalla = 1;
+
+void Usuario(int id){
+    int id_impresora;
+    id_impresora = requerir();
+    
+    // Protegemos el uso de la pantalla
+    wait(mutex_pantalla);
+    cout << "Usuario " << id << " tomo la impresora " << id_impresora << endl;
+    signal(mutex_pantalla);
+    
+    liberar(id_impresora);
+    
+    // Volvemos a proteger el uso de la pantalla
+    wait(mutex_pantalla);
+    cout << "Usuario " << id << " libero la impresora " << id_impresora << endl;
+    signal(mutex_pantalla);
+}
+
+void main(){
+    inicializar();
+
+    cobegin{
+        Usuario(1);
+        Usuario(2);
+        Usuario(3);
+        Usuario(4);
+    }
+}

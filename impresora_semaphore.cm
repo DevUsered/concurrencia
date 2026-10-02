@@ -1,0 +1,40 @@
+int libres[2];
+semaphore sem_impresoras = 2;
+semaphore mutex = 1;
+
+void Usuario(int id){
+        int id_impresora = -1;
+        int i;
+// ZONA 1
+        wait(sem_impresoras);
+        wait(mutex);
+        for(i = 0; i<2;  i++){
+              if(libres[i] == 1){
+               libres[i] = 0;
+               id_impresora = i;
+               break;
+               }
+     }
+signal(mutex);
+// PASO 3
+    cout << "El usuario " <<  id << " esta usanso la impresora " << id_impresora << endl;
+ // ZONA 2
+        wait(mutex);
+        libres[id_impresora] = 1;
+cout << "Usuario " << id
+     << " libero la impresora "
+     << id_impresora << endl;
+        signal(mutex);
+        signal(sem_impresoras);
+}
+void main(){
+   libres[0] = 1;
+   libres[1] = 1;
+   cobegin{
+    Usuario(1);
+    Usuario(2);
+    Usuario(3);
+Usuario(4);
+Usuario(5);
+  }
+}
